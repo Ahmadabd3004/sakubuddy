@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SakuBuddy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<template id="__bundler_thumbnail" data-bg-color="#D9E4EE">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#D9E4EE"/>
+    <rect x="475" y="120" width="250" height="540" rx="34" fill="#1B2838"/>
+    <rect x="487" y="132" width="226" height="516" rx="26" fill="#EEF3F8"/>
+    <circle cx="600" cy="155" r="6" fill="#1B2838"/>
+    <rect x="510" y="200" width="120" height="14" rx="4" fill="#1B2838" opacity="0.85"/>
+    <rect x="510" y="225" width="80" height="8" rx="3" fill="#1B2838" opacity="0.3"/>
+    <rect x="510" y="260" width="180" height="100" rx="14" fill="#FFFFFF"/>
+    <rect x="525" y="280" width="60" height="8" rx="3" fill="#1B2838" opacity="0.3"/>
+    <rect x="525" y="298" width="130" height="20" rx="4" fill="oklch(58% 0.10 245)"/>
+    <rect x="510" y="385" width="180" height="60" rx="12" fill="#FFFFFF"/>
+    <rect x="510" y="460" width="180" height="60" rx="12" fill="#FFFFFF"/>
+    <rect x="510" y="535" width="180" height="60" rx="12" fill="#FFFFFF"/>
+    <circle cx="640" cy="612" r="22" fill="oklch(58% 0.10 245)"/>
+    <text x="640" y="619" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">+</text>
+  </svg>
+</template>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #D9E4EE;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  :root {
+    --coral: oklch(58% 0.10 245);    /* primary blue */
+    --mint: oklch(68% 0.09 200);      /* teal accent */
+    --yellow: oklch(80% 0.10 90);
+    --navy: #EEF3F8;                  /* soft ice */
+    --card: #FFFFFF;
+    --card2: #F5F8FC;
+    --text: #1B2838;                  /* deep navy text */
+    --muted: #7889A0;
+    --border: rgba(27,40,56,0.08);
+  }
+  .phone-shell {
+    width: 390px;
+    height: 844px;
+    background: var(--navy);
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 60px rgba(80,60,40,0.15), 0 0 0 1px rgba(27,40,56,0.04);
+  }
+  /* Dynamic island */
+  .island {
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 100;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Scrollable area */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* Status bar */
+  .status-bar {
+    height: 52px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 28px 8px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    z-index: 10;
+    position: relative;
+  }
+
+  /* Animations */
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    70% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.1); }
+    80% { transform: scale(0.95); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0px); }
+  }
+  .slide-up { animation: slideUp 0.35s cubic-bezier(0.32,0,0.15,1) both; }
+  .fade-in { animation: fadeIn 0.3s ease both; }
+  .pop-in { animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .float-anim { animation: floatUp 3s ease-in-out infinite; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    height: 80px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 16px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 50;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1; cursor: pointer; transition: all 0.2s;
+    color: var(--muted); font-size: 10px; font-weight: 600;
+    padding: 8px 0;
+    border: none; background: none;
+    letter-spacing: 0.3px;
+  }
+  .nav-item.active { color: var(--coral); }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* FAB */
+  .fab {
+    width: 58px; height: 58px;
+    background: var(--coral);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 16px oklch(58% 0.10 245 / 0.25);
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    border: none;
+    flex-shrink: 0;
+    position: relative;
+    bottom: 12px;
+  }
+  .fab:active { transform: scale(0.9); }
+  .fab svg { width: 28px; height: 28px; color: white; }
+
+  /* Health Bar */
+  .health-bar-track {
+    height: 10px;
+    background: rgba(27,40,56,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+  .health-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1), background 0.8s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .health-bar-fill::after { content: none; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .card2 {
+    background: var(--card2);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+
+  /* Quick category buttons */
+  .quick-cat {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    background: var(--card2);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 11px; font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+    flex: 1;
+    min-width: 0;
+  }
+  .quick-cat:active { transform: scale(0.93); }
+
+  /* Numpad */
+  .numpad-btn {
+    height: 56px;
+    border-radius: 14px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 20px; font-weight: 600;
+    color: var(--text);
+    font-family: 'Fredoka', sans-serif;
+    transition: all 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .numpad-btn:active { transform: scale(0.92); background: var(--card); }
+  .numpad-btn.special { font-size: 14px; letter-spacing: 0.5px; background: rgba(27,40,56,0.04); }
+  .numpad-btn.action { background: var(--coral); color: white; box-shadow: 0 3px 10px oklch(58% 0.10 245 / 0.2); }
+  .numpad-btn.action:active { background: oklch(48% 0.12 245); }
+  .numpad-btn.zero-btn { font-size: 22px; }
+
+  /* Mood pills */
+  .mood-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    background: var(--card2);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    flex: 1;
+    letter-spacing: 0.4px;
+  }
+  .mood-btn.selected { border-color: var(--coral); background: oklch(58% 0.10 245 / 0.1); color: var(--text); }
+  .mood-btn:active { transform: scale(0.92); }
+  .mood-emoji { font-size: 28px; line-height: 1; }
+
+  /* Toggle */
+  .toggle-track {
+    width: 44px; height: 26px;
+    border-radius: 99px;
+    background: rgba(27,40,56,0.1);
+    position: relative; cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .toggle-track.on { background: var(--coral); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+
+  /* Transaction list */
+  .tx-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.3s ease both;
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  /* Sheet overlay */
+  .sheet-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 80;
+    display: flex; align-items: flex-end;
+  }
+  .sheet {
+    width: 100%;
+    background: var(--navy);
+    border-radius: 28px 28px 0 0;
+    border-top: 1px solid var(--border);
+    padding-bottom: 34px;
+    max-height: 92%;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .sheet::-webkit-scrollbar { display: none; }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: rgba(27,40,56,0.1);
+    border-radius: 99px;
+    margin: 14px auto 0;
+  }
+
+  /* Amount display */
+  .amount-display {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 46px; font-weight: 300;
+    color: var(--text); letter-spacing: -1.5px;
+    text-align: center;
+    min-height: 52px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .amount-prefix {
+    font-size: 18px; color: var(--muted); margin-right: 4px; font-weight: 500;
+  }
+
+  /* Section header */
+  .sec-header {
+    font-size: 11px; font-weight: 600;
+    color: var(--muted); letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 0 20px;
+    margin-bottom: 10px;
+  }
+
+  /* Insight card */
+  .insight-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .insight-card::before { content: none; }
+
+  /* Category progress */
+  .cat-progress-track {
+    height: 8px; background: rgba(27,40,56,0.06); border-radius: 99px; overflow: hidden;
+  }
+  .cat-progress-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* Input field */
+  .text-input {
+    background: var(--card2);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 600;
+    padding: 14px 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+    caret-color: var(--coral);
+  }
+  .text-input::placeholder { color: var(--muted); }
+  .text-input:focus { border-color: var(--coral); }
+
+  /* Chip */
+  .chip {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1.5px solid var(--border);
+    background: var(--card2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .chip.active {
+    background: var(--coral);
+    border-color: var(--coral);
+    color: white;
+  }
+
+  /* Glow */
+  .coral-glow { box-shadow: 0 8px 32px oklch(58% 0.10 245 / 0.2); }
+  .mint-glow { box-shadow: 0 8px 32px oklch(68% 0.09 200 / 0.22); }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    top: 68px; left: 50%; transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 18px;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap;
+    z-index: 200;
+    animation: bounceIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Confetti particle */
+  .confetti { position: absolute; pointer-events: none; border-radius: 2px; z-index: 150; animation: confettiFall linear both; }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+  }
+
+  /* Bg gradient */
+  .bg-gradient {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 300px 200px at 50% -60px, oklch(68% 0.09 200 / 0.18), transparent);
+    z-index: 0;
+  }
+
+  /* Outer shell bg */
+  .outer-bg {
+    background: radial-gradient(ellipse 800px 600px at 50% 40%, #E5EEF7, #C9D8E6);
+    min-height: 100vh;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+<div class="outer-bg">
+<div id="root"></div>
+</div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── Lucide icon helper ───────────────────────────────────────────────────────
+function Icon({ name, size = 20, stroke = 2, color = 'currentColor', style }) {
+  const iconData = lucide[name];
+  if (!iconData) return <span style={{ width: size, height: size, display:'inline-block' }} />;
+  const [, , children] = iconData;
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size} height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+    >
+      {children.map(([tag, attrs], i) =>
+        React.createElement(tag, { key: i, ...attrs })
+      )}
+    </svg>
+  );
+}
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+function fmt(n) {
+  return n.toLocaleString('id-ID');
+}
+
+const CATEGORIES = [
+  { id: 'food', label: 'Makan', emoji: '🍜', color: '#f97316' },
+  { id: 'transport', label: 'Parkir', emoji: '🛵', color: '#3b82f6' },
+  { id: 'coffee', label: 'Kopi', emoji: '☕', color: '#a16207' },
+  { id: 'shop', label: 'Belanja', emoji: '🛍️', color: '#a855f7' },
+  { id: 'fun', label: 'Hiburan', emoji: '🎮', color: '#ec4899' },
+  { id: 'other', label: 'Lainnya', emoji: '📦', color: '#6b7280' },
+];
+
+const MOODS = [
+  { id: 'happy', emoji: '😊', label: 'Senang' },
+  { id: 'sad', emoji: '😢', label: 'Sedih' },
+  { id: 'stress', emoji: '😤', label: 'Stres' },
+];
+
+const INITIAL_BALANCE = 1500000;
+
+// ─── HealthBar ─────────────────────────────────────────────────────────────────
+function HealthBar({ balance, maxBalance }) {
+  const pct = Math.max(0, Math.min(100, (balance / maxBalance) * 100));
+  let color = 'oklch(68% 0.09 200)'; // green
+  let label = 'Aman 🌿';
+  if (pct < 30) { color = 'oklch(60% 0.14 25)'; label = 'Kritis! 🚨'; }
+  else if (pct < 60) { color = 'oklch(72% 0.12 70)'; label = 'Hati-hati ⚠️'; }
+
+  return (
+    <div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+        <span style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px' }}>KESEHATAN SAKU</span>
+        <span style={{ fontSize:12, fontWeight:600, color }}>{label}</span>
+      </div>
+      <div className="health-bar-track">
+        <div className="health-bar-fill" style={{ width:`${pct}%`, background:`linear-gradient(90deg, ${color}, ${color})` }} />
+      </div>
+      <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+        <span style={{ fontFamily:'Fredoka', fontSize:11, color:'var(--muted)' }}>Rp 0</span>
+        <span style={{ fontFamily:'Fredoka', fontSize:11, color:'var(--muted)' }}>Rp {fmt(maxBalance)}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────────
+function Dashboard({ balance, maxBalance, transactions, onOpenInput, onOpenCat, onNav, userName, quickActions, onAddQuickAction, onDeleteQuickAction, onDeleteTx, routines, dailyChecks, onCheckRoutine }) {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  const recentTx = [...transactions].reverse().slice(0,4);
+  const totalSpent = maxBalance - balance;
+
+  const hour = today.getHours();
+  const greeting = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 19 ? 'Selamat sore' : 'Selamat malam';
+
+  return (
+    <div className="screen fade-in">
+      <div className="bg-gradient" />
+      <div className="status-bar">
+        <span>9:41</span>
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          <Icon name="Signal" size={16} stroke={2} />
+          <Icon name="Wifi" size={16} stroke={2} />
+          <span style={{ fontFamily:'Fredoka', fontSize:12 }}>78%</span>
+        </div>
+      </div>
+
+      <div className="scroll-area" style={{ position:'relative', zIndex:1 }}>
+        {/* Header */}
+        <div style={{ padding:'0 20px 0' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <p style={{ fontSize:13, color:'var(--muted)', fontWeight:600 }}>{greeting} ✨</p>
+              <h1 style={{ fontFamily:'Fredoka', fontSize:30, fontWeight:600, color:'var(--text)', lineHeight:1.05, marginTop:2, letterSpacing:-0.5 }}>Halo, {userName}.</h1>
+            </div>
+            <div onClick={() => onNav('profile')} style={{ cursor:'pointer', width:46, height:46, borderRadius:'50%', background:'oklch(58% 0.10 245 / 0.15)', color:'var(--coral)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, cursor:'pointer', boxShadow:'none' }}>{(userName||'A')[0].toUpperCase()}</div>
+          </div>
+          <p style={{ fontSize:11, color:'var(--muted)', marginTop:4, fontWeight:600 }}>{dateStr}</p>
+        </div>
+
+        {/* Balance card */}
+        <div style={{ margin:'16px 20px 0' }}>
+          <div className="card" style={{ padding:'22px 22px 18px', position:'relative', overflow:'hidden' }}>
+            <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'1px', textTransform:'uppercase', marginBottom:6, position:'relative' }}>Saldo Tersedia</p>
+            <p style={{ fontFamily:'Fredoka', fontSize:40, fontWeight:600, color:'var(--text)', letterSpacing:-1, position:'relative', lineHeight:1 }}>
+              <span style={{ fontFamily:'Funnel Sans', fontSize:15, color:'var(--muted)', fontWeight:500, letterSpacing:0 }}>Rp </span>
+              {fmt(balance)}
+            </p>
+            <div style={{ marginTop:16, position:'relative' }}>
+              <HealthBar balance={balance} maxBalance={maxBalance} />
+            </div>
+            <div style={{ display:'flex', gap:16, marginTop:16, paddingTop:16, borderTop:'1px solid var(--border)', position:'relative' }}>
+              <div>
+                <p style={{ fontSize:10, color:'var(--muted)', fontWeight:600, letterSpacing:'0.5px' }}>PENGELUARAN</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:15, fontWeight:600, color:'oklch(60% 0.14 25)', marginTop:2 }}>- Rp {fmt(totalSpent)}</p>
+              </div>
+              <div style={{ width:1, background:'var(--border)' }} />
+              <div>
+                <p style={{ fontSize:10, color:'var(--muted)', fontWeight:600, letterSpacing:'0.5px' }}>TRANSAKSI</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:15, fontWeight:600, color:'var(--text)', marginTop:2 }}>{transactions.length} kali</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Rutinitas Hari Ini */}
+        {(() => {
+          const isWeekend = [0, 6].includes(new Date().getDay());
+          const todayType = isWeekend ? 'weekend' : 'weekday';
+          const todayKey = new Date().toISOString().split('T')[0];
+          const todayRoutines = routines.filter(r => r.appliesTo === 'daily' || r.appliesTo === todayType);
+          const todayChecksMap = dailyChecks[todayKey] || {};
+          const doneCount = todayRoutines.filter(r => todayChecksMap[r.id] === 'done').length;
+          if (todayRoutines.length === 0) return null;
+          return (
+            <div style={{ margin:'20px 20px 0' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                <p className="sec-header" style={{ padding:0, margin:0 }}>RUTINITAS HARI INI</p>
+                <span style={{ fontSize:12, fontWeight:600, color: doneCount === todayRoutines.length ? 'oklch(68% 0.09 200)' : 'var(--muted)' }}>
+                  {doneCount}/{todayRoutines.length} selesai
+                </span>
+              </div>
+              <div className="card" style={{ padding:'4px 16px' }}>
+                {todayRoutines.map(routine => {
+                  const status = todayChecksMap[routine.id];
+                  const cat = CATEGORIES.find(c => c.id === routine.category) || CATEGORIES[5];
+                  return (
+                    <div key={routine.id} className="tx-item" style={{ cursor:'pointer' }} onClick={() => onCheckRoutine(routine.id, status)}>
+                      <div style={{
+                        width:34, height:34, borderRadius:99, flexShrink:0,
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        background: status === 'done' ? 'oklch(68% 0.09 200)' : status === 'skipped' ? 'rgba(27,40,56,0.06)' : 'transparent',
+                        border: !status ? '2px solid rgba(27,40,56,0.15)' : 'none',
+                        transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)'
+                      }}>
+                        {status === 'done' && <Icon name="Check" size={16} stroke={2.5} color="white" />}
+                        {status === 'skipped' && <Icon name="X" size={16} stroke={2.5} color="var(--muted)" />}
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontSize:14, fontWeight:600, color: status === 'skipped' ? 'var(--muted)' : 'var(--text)', textDecoration: status === 'skipped' ? 'line-through' : 'none', transition:'all 0.2s' }}>
+                          {routine.emoji} {routine.name}
+                        </p>
+                        <p style={{ fontSize:11, color:'var(--muted)', marginTop:1 }}>
+                          {status === 'skipped' ? 'Dilewati' : `Rp ${fmt(routine.amount)}`}
+                        </p>
+                      </div>
+                      {status === 'done' && (
+                        <span style={{ fontFamily:'Fredoka', fontSize:13, fontWeight:600, color:'oklch(60% 0.14 25)', flexShrink:0 }}>-Rp {fmt(routine.amount)}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Quick actions */}
+        <div style={{ margin:'20px 0 0' }}>
+          <p className="sec-header" style={{ marginBottom:12 }}>AKSI CEPAT</p>
+          <div style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', paddingLeft:20, paddingRight:20, paddingBottom:4 }}>
+            {quickActions.map(cat => (
+              <button
+                key={cat.key}
+                className="quick-cat"
+                style={{ flexShrink:0, minWidth:70, position:'relative' }}
+                onClick={() => onOpenCat(cat)}
+                onContextMenu={e => { e.preventDefault(); if (cat.custom) onDeleteQuickAction(cat.key); }}
+              >
+                {cat.custom && (
+                  <div
+                    role="button"
+                    onClick={e => { e.stopPropagation(); onDeleteQuickAction(cat.key); }}
+                    style={{ position:'absolute', top:-6, right:-6, width:18, height:18, borderRadius:'50%', background:'oklch(60% 0.14 25)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}
+                  >
+                    <Icon name="X" size={10} stroke={2.5} color="white" />
+                  </div>
+                )}
+                <span style={{ fontSize:22 }}>{cat.emoji}</span>
+                <span style={{ fontSize:10, color:'var(--muted)', lineHeight:1.2, textAlign:'center', maxWidth:64, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{cat.label}</span>
+              </button>
+            ))}
+            {/* Add new quick action */}
+            <button
+              className="quick-cat"
+              style={{ flexShrink:0, minWidth:70, borderStyle:'dashed', borderColor:'rgba(27,40,56,0.1)', color:'var(--muted)' }}
+              onClick={onAddQuickAction}
+            >
+              <Icon name="Plus" size={22} stroke={2} color="var(--muted)" />
+              <span style={{ fontSize:10, lineHeight:1.2, textAlign:'center' }}>Tambah</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Recent transactions */}
+        <div style={{ margin:'20px 20px 8px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+            <p className="sec-header" style={{ padding:0, margin:0 }}>TRANSAKSI TERKINI</p>
+            <button onClick={() => onNav('report')} style={{ fontSize:12, fontWeight:600, color:'var(--coral)', background:'none', border:'none', cursor:'pointer' }}>Lihat semua →</button>
+          </div>
+          {recentTx.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'32px 0', color:'var(--muted)' }}>
+              <p style={{ fontSize:32, marginBottom:8 }}>💸</p>
+              <p style={{ fontSize:13, fontWeight:600 }}>Belum ada transaksi</p>
+              <p style={{ fontSize:12, marginTop:4 }}>Tekan + untuk mulai mencatat</p>
+            </div>
+          ) : (
+            <div className="card" style={{ padding:'4px 16px' }}>
+              {recentTx.map((tx, i) => {
+                const cat = CATEGORIES.find(c => c.id === tx.category) || CATEGORIES[5];
+                const mood = MOODS.find(m => m.id === tx.mood);
+                return (
+                  <div key={tx.id} className="tx-item" style={{ animationDelay: `${i*0.06}s` }}>
+                    <div className="tx-icon" style={{ background: cat.color + '22' }}>
+                      <span style={{ fontSize:18 }}>{cat.emoji}</span>
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{tx.name}</p>
+                      <div style={{ display:'flex', gap:6, marginTop:2, alignItems:'center' }}>
+                        {tx.unplanned && <span style={{ fontSize:9, fontWeight:600, background:'oklch(60% 0.14 25 / 0.12)', color:'var(--coral)', padding:'1px 6px', borderRadius:99, letterSpacing:'0.5px' }}>LUAR RENCANA</span>}
+                        {mood && <span style={{ fontSize:11 }}>{mood.emoji}</span>}
+                      </div>
+                    </div>
+                    <p style={{ fontFamily:'Fredoka', fontSize:14, fontWeight:600, color:'oklch(60% 0.14 25)', flexShrink:0 }}>-Rp {fmt(tx.amount)}</p>
+                    <button onClick={() => onDeleteTx(tx.id)} style={{ marginLeft:6, width:26, height:26, borderRadius:8, background:'rgba(27,40,56,0.05)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Icon name="Trash2" size={13} stroke={2} color="var(--muted)" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div style={{ height:20 }} />
+      </div>
+
+      {/* Bottom nav */}
+      <BottomNav active="home" onNav={onNav} onFab={onOpenInput} />
+    </div>
+  );
+}
+
+// ─── InputSheet ────────────────────────────────────────────────────────────────
+function InputSheet({ onClose, onSubmit, presetCat, presetAmount }) {
+  const [amount, setAmount] = useState(presetAmount ? String(presetAmount) : '');
+  const [name, setName] = useState(presetCat ? (presetCat.label || '') : '');
+  const [category, setCategory] = useState(presetCat ? presetCat.id : 'food');
+  const [mood, setMood] = useState(null);
+  const [unplanned, setUnplanned] = useState(false);
+  const [step, setStep] = useState(0); // 0=amount, 1=details
+
+  const handleNum = (val) => {
+    setAmount(prev => {
+      if (val === '⌫') return prev.slice(0,-1);
+      if (val === '000') return prev + '000';
+      if (prev.length >= 9) return prev;
+      return prev + val;
+    });
+  };
+
+  const canProceed = amount.length > 0 && parseInt(amount) > 0;
+  const canSubmit = canProceed && mood !== null && name.trim().length > 0;
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    onSubmit({ amount: parseInt(amount), name: name.trim(), category, mood, unplanned });
+  };
+
+  return (
+    <div className="sheet-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="sheet slide-up">
+        <div className="sheet-handle" />
+
+        {step === 0 && (
+          <div className="fade-in">
+            {/* Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px 0' }}>
+              <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Catat Pengeluaran</p>
+              <button onClick={onClose} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+
+            {/* Amount display */}
+            <div style={{ padding:'20px 20px 0' }}>
+              <div className="amount-display" style={{ background:'var(--card)', borderRadius:16, padding:'16px 20px' }}>
+                <span className="amount-prefix">Rp</span>
+                <span style={{ color: amount ? 'var(--text)' : 'var(--muted)', minWidth:40 }}>
+                  {amount ? fmt(parseInt(amount)) : '0'}
+                </span>
+              </div>
+            </div>
+
+            {/* Category chips */}
+            <div style={{ padding:'14px 20px 0', display:'flex', gap:8, overflowX:'auto', scrollbarWidth:'none', paddingBottom:2 }}>
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} className={`chip ${category === cat.id ? 'active' : ''}`} onClick={() => setCategory(cat.id)}>
+                  {cat.emoji} {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Numpad */}
+            <div style={{ padding:'12px 20px 0', display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+              {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map(k => (
+                <button
+                  key={k}
+                  className={`numpad-btn ${k==='000' ? 'special' : ''} ${k==='⌫' ? 'special' : ''}`}
+                  onClick={() => handleNum(k)}
+                >
+                  {k === '⌫' ? (
+                    <Icon name="Delete" size={22} stroke={2} />
+                  ) : k}
+                </button>
+              ))}
+            </div>
+
+            {/* Next button */}
+            <div style={{ padding:'14px 20px 0' }}>
+              <button
+                onClick={() => canProceed && setStep(1)}
+                style={{
+                  width:'100%', height:54, borderRadius:16,
+                  background: canProceed ? 'var(--coral)' : 'rgba(27,40,56,0.05)',
+                  color: canProceed ? 'white' : 'var(--muted)',
+                  border:'none', cursor: canProceed ? 'pointer' : 'default',
+                  fontSize:16, fontWeight:600, letterSpacing:0.5,
+                  transition:'all 0.25s',
+                  boxShadow: canProceed ? '0 8px 24px oklch(58% 0.10 245 / 0.2)' : 'none'
+                }}
+              >
+                Lanjutkan →
+              </button>
+            </div>
+            <div style={{ height:16 }} />
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="fade-in">
+            {/* Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px 0' }}>
+              <button onClick={() => setStep(0)} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>←</button>
+              <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Detail Transaksi</p>
+              <button onClick={onClose} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+
+            {/* Amount summary */}
+            <div style={{ margin:'16px 20px 0', background:'var(--card)', borderRadius:16, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div>
+                <p style={{ fontSize:11, color:'var(--muted)', fontWeight:600, letterSpacing:'0.5px' }}>JUMLAH</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:22, fontWeight:600, color:'var(--text)', marginTop:2 }}>Rp {fmt(parseInt(amount))}</p>
+              </div>
+              <span style={{ fontSize:28 }}>{CATEGORIES.find(c=>c.id===category)?.emoji || '📦'}</span>
+            </div>
+
+            <div style={{ padding:'0 20px', marginTop:14 }}>
+              {/* Name input */}
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:8 }}>NAMA TRANSAKSI</p>
+              <input
+                className="text-input"
+                placeholder="cth. Kopi Susu, Makan Siang..."
+                value={name}
+                onChange={e => setName(e.target.value)}
+                maxLength={32}
+              />
+
+              {/* Unplanned toggle */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', margin:'16px 0', padding:'14px 16px', background:'var(--card)', borderRadius:14, border:'1px solid var(--border)' }}>
+                <div>
+                  <p style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>Luar Rencana 🎲</p>
+                  <p style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>Pengeluaran impulsif / FOMO</p>
+                </div>
+                <div className={`toggle-track ${unplanned ? 'on' : ''}`} onClick={() => setUnplanned(p=>!p)}>
+                  <div className="toggle-thumb" />
+                </div>
+              </div>
+
+              {/* Mood selector */}
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:8 }}>LAGI NGERASA APA?</p>
+              <div style={{ display:'flex', gap:8 }}>
+                {MOODS.map(m => (
+                  <button key={m.id} className={`mood-btn ${mood === m.id ? 'selected' : ''}`} onClick={() => setMood(m.id)}>
+                    <span className="mood-emoji">{m.emoji}</span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Needs/wants chip */}
+              <div style={{ display:'flex', gap:8, marginTop:14 }}>
+                <button className={`chip ${!unplanned ? 'active' : ''}`} onClick={() => setUnplanned(false)} style={{ flex:1 }}>
+                  ✅ Kebutuhan (Needs)
+                </button>
+                <button className={`chip ${unplanned ? 'active' : ''}`} onClick={() => setUnplanned(true)} style={{ flex:1, ...(unplanned ? { background:'oklch(68% 0.09 200)', borderColor:'oklch(68% 0.09 200)' } : {}) }}>
+                  ✨ Keinginan (Wants)
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div style={{ padding:'16px 20px 0' }}>
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                style={{
+                  width:'100%', height:54, borderRadius:16,
+                  background: canSubmit ? 'var(--coral)' : 'rgba(27,40,56,0.05)',
+                  color: canSubmit ? 'white' : 'var(--muted)',
+                  border:'none', cursor: canSubmit ? 'pointer' : 'default',
+                  fontSize:16, fontWeight:600, letterSpacing:0.5,
+                  transition:'all 0.25s',
+                  boxShadow: canSubmit ? '0 8px 24px oklch(58% 0.10 245 / 0.2)' : 'none'
+                }}
+              >
+                Simpan Transaksi 💾
+              </button>
+            </div>
+            <div style={{ height:20 }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ReportScreen ──────────────────────────────────────────────────────────────
+function ReportScreen({ transactions, balance, maxBalance, onNav, onDeleteTx }) {
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiText, setAiText] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const totalSpent = maxBalance - balance;
+  const needs = transactions.filter(t => !t.unplanned).reduce((s,t) => s+t.amount, 0);
+  const wants = transactions.filter(t => t.unplanned).reduce((s,t) => s+t.amount, 0);
+
+  // Category breakdown
+  const catTotals = CATEGORIES.map(cat => ({
+    ...cat,
+    total: transactions.filter(t=>t.category===cat.id).reduce((s,t)=>s+t.amount,0)
+  })).filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
+
+  // Mood breakdown
+  const moodTotals = MOODS.map(m => ({
+    ...m,
+    total: transactions.filter(t=>t.mood===m.id).reduce((s,t)=>s+t.amount,0),
+    count: transactions.filter(t=>t.mood===m.id).length
+  }));
+
+  const topCategory = catTotals[0];
+  const topCategoryTx = topCategory ? transactions.filter(t=>t.category===topCategory.id) : [];
+
+  const generateAI = useCallback(async () => {
+    setAiLoading(true);
+    setAiText('');
+    const summary = `Pengguna: Alya, mahasiswi 20 tahun. 
+Total pengeluaran bulan ini: Rp ${fmt(totalSpent)}.
+Kebutuhan (Needs): Rp ${fmt(needs)}.
+Keinginan (Wants): Rp ${fmt(wants)}.
+Transaksi terbanyak: ${topCategory ? topCategory.label + ' (Rp ' + fmt(topCategory.total) + ')' : 'tidak ada'}.
+Mood transaksi: Senang=${moodTotals[0].count}x, Sedih=${moodTotals[1].count}x, Stres=${moodTotals[2].count}x.
+Berikan insight keuangan singkat dalam Bahasa Indonesia yang casual, maks 3 kalimat. Gunakan emoji. Fokus pada kebiasaan pengeluaran dan saran menabung.`;
+
+    try {
+      const text = await window.claude.complete({
+        messages: [{ role:'user', content: summary }]
+      });
+      setAiText(text);
+    } catch(e) {
+      setAiText(`Wah, kamu udah belanja Rp ${fmt(totalSpent)} bulan ini! ${wants > needs ? '✨ Pengeluaran keinginan kamu lebih besar dari kebutuhan — coba deh kurangi sedikit buat nabung lebih banyak 💰' : '🌿 Bagus banget, pengeluaran kebutuhanmu lebih terkontrol!'} Tetap semangat Alya, kamu bisa! 💪`);
+    }
+    setAiLoading(false);
+  }, [totalSpent, needs, wants, topCategory, moodTotals]);
+
+  useEffect(() => {
+    if (!hasLoaded) { setHasLoaded(true); generateAI(); }
+  }, []);
+
+  const pctNeeds = totalSpent > 0 ? (needs/totalSpent)*100 : 0;
+  const pctWants = totalSpent > 0 ? (wants/totalSpent)*100 : 0;
+
+  return (
+    <div className="screen fade-in">
+      <div className="bg-gradient" />
+      <div className="status-bar">
+        <span>9:41</span>
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          <Icon name="Signal" size={16} stroke={2} />
+          <Icon name="Wifi" size={16} stroke={2} />
+          <span style={{ fontFamily:'Fredoka', fontSize:12 }}>78%</span>
+        </div>
+      </div>
+
+      <div className="scroll-area" style={{ position:'relative', zIndex:1 }}>
+        {/* Header */}
+        <div style={{ padding:'0 20px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <div>
+            <h1 style={{ fontSize:22, fontWeight:600, color:'var(--text)' }}>Laporan Keuangan</h1>
+            <p style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>{new Date().toLocaleDateString('id-ID', { month:'long', year:'numeric' })} · {transactions.length} transaksi</p>
+          </div>
+          <span style={{ fontSize:28 }}>📊</span>
+        </div>
+
+        {/* Total card */}
+        <div style={{ margin:'16px 20px 0' }}>
+          <div className="card" style={{ padding:'20px' }}>
+            <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'1px' }}>TOTAL PENGELUARAN</p>
+            <p style={{ fontFamily:'Fredoka', fontSize:32, fontWeight:600, color:'oklch(60% 0.14 25)', marginTop:4 }}>Rp {fmt(totalSpent)}</p>
+
+            {/* Needs vs Wants bar */}
+            <div style={{ marginTop:16 }}>
+              <div style={{ display:'flex', height:10, borderRadius:99, overflow:'hidden', gap:2 }}>
+                <div style={{ width:`${pctNeeds}%`, background:'oklch(68% 0.09 200)', borderRadius:'99px 0 0 99px', transition:'width 1s ease', minWidth: pctNeeds > 0 ? 4 : 0 }} />
+                <div style={{ width:`${pctWants}%`, background:'var(--coral)', borderRadius:'0 99px 99px 0', transition:'width 1s ease', minWidth: pctWants > 0 ? 4 : 0 }} />
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', marginTop:8 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:8, height:8, borderRadius:99, background:'oklch(68% 0.09 200)', flexShrink:0 }} />
+                  <span style={{ fontSize:12, color:'var(--muted)', fontWeight:600 }}>Kebutuhan <span style={{ fontFamily:'Fredoka', color:'var(--text)' }}>Rp {fmt(needs)}</span></span>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:8, height:8, borderRadius:99, background:'var(--coral)', flexShrink:0 }} />
+                  <span style={{ fontSize:12, color:'var(--muted)', fontWeight:600 }}>Keinginan <span style={{ fontFamily:'Fredoka', color:'var(--text)' }}>Rp {fmt(wants)}</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Insight */}
+        <div style={{ margin:'16px 20px 0' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+            <p className="sec-header" style={{ padding:0, margin:0 }}>AI INSIGHT</p>
+            <button onClick={generateAI} style={{ fontSize:11, fontWeight:600, color:'var(--coral)', background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+              🔄 Refresh
+            </button>
+          </div>
+          <div className="insight-card">
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+              <div style={{ width:32, height:32, borderRadius:10, background:'oklch(60% 0.14 25 / 0.12)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🤖</div>
+              <div>
+                <p style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>SakuAI</p>
+                <p style={{ fontSize:10, color:'var(--muted)' }}>Analisis personal untukmu</p>
+              </div>
+            </div>
+            {aiLoading ? (
+              <div style={{ display:'flex', gap:4, alignItems:'center', padding:'8px 0' }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'var(--coral)', animation:`pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />
+                ))}
+                <span style={{ fontSize:12, color:'var(--muted)', marginLeft:6 }}>SakuAI sedang menganalisis...</span>
+              </div>
+            ) : (
+              <p style={{ fontSize:14, color:'var(--text)', lineHeight:1.65, fontWeight:600, position:'relative', zIndex:1 }}>{aiText || '—'}</p>
+            )}
+          </div>
+        </div>
+
+        {catTotals.length > 0 && (
+          <div style={{ margin:'20px 20px 0' }}>
+            <p className="sec-header" style={{ padding:0, marginBottom:12 }}>BREAKDOWN KATEGORI</p>
+            <div className="card" style={{ padding:'16px' }}>
+              {catTotals.map((cat, i) => {
+                const pct = totalSpent > 0 ? (cat.total/totalSpent)*100 : 0;
+                return (
+                  <div key={cat.id} style={{ marginBottom: i < catTotals.length-1 ? 16 : 0, animationDelay: `${i*0.08}s` }} className="fade-in">
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:18 }}>{cat.emoji}</span>
+                        <span style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>{cat.label}</span>
+                      </div>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:11, color:'var(--muted)', fontWeight:600 }}>{pct.toFixed(0)}%</span>
+                        <span style={{ fontFamily:'Fredoka', fontSize:13, fontWeight:600, color:'var(--text)' }}>Rp {fmt(cat.total)}</span>
+                      </div>
+                    </div>
+                    <div className="cat-progress-track">
+                      <div className="cat-progress-fill" style={{ width:`${pct}%`, background: cat.color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Mood spending */}
+        <div style={{ margin:'20px 20px 0' }}>
+          <p className="sec-header" style={{ padding:0, marginBottom:12 }}>PENGELUARAN vs MOOD</p>
+          <div style={{ display:'flex', gap:10 }}>
+            {moodTotals.map(m => (
+              <div key={m.id} className="card2" style={{ flex:1, padding:'14px 12px', textAlign:'center' }}>
+                <span style={{ fontSize:28 }}>{m.emoji}</span>
+                <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', marginTop:6, letterSpacing:'0.3px' }}>{m.label}</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:13, fontWeight:600, color:'var(--text)', marginTop:4 }}>
+                  {m.total > 0 ? `Rp ${fmt(m.total)}` : '—'}
+                </p>
+                <p style={{ fontSize:10, color:'var(--muted)', marginTop:2 }}>{m.count}x transaksi</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* All transactions */}
+        {transactions.length > 0 && (
+          <div style={{ margin:'20px 20px 8px' }}>
+            <p className="sec-header" style={{ padding:0, marginBottom:12 }}>SEMUA TRANSAKSI</p>
+            <div className="card" style={{ padding:'4px 16px' }}>
+              {[...transactions].reverse().map((tx, i) => {
+                const cat = CATEGORIES.find(c=>c.id===tx.category) || CATEGORIES[5];
+                const mood = MOODS.find(m=>m.id===tx.mood);
+                return (
+                  <div key={tx.id} className="tx-item" style={{ animationDelay:`${i*0.04}s` }}>
+                    <div className="tx-icon" style={{ background: cat.color+'22' }}>
+                      <span style={{ fontSize:18 }}>{cat.emoji}</span>
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontSize:14, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{tx.name}</p>
+                      <div style={{ display:'flex', gap:6, marginTop:2, alignItems:'center' }}>
+                        <span style={{ fontSize:10, color:'var(--muted)' }}>{cat.label}</span>
+                        {tx.unplanned && <span style={{ fontSize:9, fontWeight:600, background:'oklch(60% 0.14 25 / 0.12)', color:'var(--coral)', padding:'1px 5px', borderRadius:99 }}>WANTS</span>}
+                        {mood && <span style={{ fontSize:11 }}>{mood.emoji}</span>}
+                      </div>
+                    </div>
+                    <p style={{ fontFamily:'Fredoka', fontSize:14, fontWeight:600, color:'oklch(60% 0.14 25)' }}>-Rp {fmt(tx.amount)}</p>
+                    <button onClick={() => onDeleteTx(tx.id)} style={{ marginLeft:6, width:26, height:26, borderRadius:8, background:'rgba(27,40,56,0.05)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Icon name="Trash2" size={13} stroke={2} color="var(--muted)" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div style={{ height:24 }} />
+      </div>
+
+      {/* Bottom nav */}
+      <BottomNav active="report" onNav={onNav} onFab={() => onNav('home')} />
+    </div>
+  );
+}
+
+// ─── BottomNav ────────────────────────────────────────────────────────────────
+function BottomNav({ active, onNav, onFab }) {
+  return (
+    <div className="bottom-nav">
+      <button className={`nav-item ${active==='home' ? 'active' : ''}`} onClick={() => onNav('home')}>
+        <Icon name="House" size={22} stroke={2.2} />
+        Beranda
+      </button>
+      <button className={`nav-item ${active==='plan' ? 'active' : ''}`} onClick={() => onNav('plan')}>
+        <Icon name="Target" size={22} stroke={2.2} />
+        Planning
+      </button>
+      <button className="fab" onClick={onFab}>
+        <Icon name="Plus" size={28} stroke={2.5} color="white" />
+      </button>
+      <button className={`nav-item ${active==='report' ? 'active' : ''}`} onClick={() => onNav('report')}>
+        <Icon name="BarChart3" size={22} stroke={2.2} />
+        Laporan
+      </button>
+      <button className={`nav-item ${active==='profile' ? 'active' : ''}`} onClick={() => onNav('profile')}>
+        <Icon name="User" size={22} stroke={2.2} />
+        Profil
+      </button>
+    </div>
+  );
+}
+
+// ─── PlanningScreen ───────────────────────────────────────────────────────────
+function PlanningScreen({ routines, onSaveRoutines, maxBalance, onSetMaxBalance, transactions, onNav, onFab }) {
+  const [items, setItems] = useState([...routines]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingBalance, setEditingBalance] = useState(false);
+  const [balanceVal, setBalanceVal] = useState('');
+
+  const monthlyEstimate = items.reduce((s, r) => s + r.amount * (r.daysPerMonth || 0), 0);
+  const remaining = maxBalance - monthlyEstimate;
+  const pct = maxBalance > 0 ? Math.min(100, (monthlyEstimate / maxBalance) * 100) : 0;
+
+  const handleDeleteItem = (id) => setItems(prev => prev.filter(r => r.id !== id));
+  const handleAddItem = (item) => { setItems(prev => [...prev, item]); setShowAdd(false); };
+
+  const TYPE_LABELS = { daily:'Setiap Hari', weekday:'Hari Kerja', weekend:'Hari Libur' };
+  const TYPE_EMOJI  = { daily:'📅', weekday:'💼', weekend:'🌴' };
+
+  const handleBalanceNum = (val) => {
+    setBalanceVal(prev => {
+      if (val === '⌫') return prev.slice(0, -1);
+      if (val === '000') { if (!prev) return prev; return prev + '000'; }
+      if (prev.length >= 9) return prev;
+      return prev + val;
+    });
+  };
+  const confirmBalance = () => {
+    const val = parseInt(balanceVal);
+    if (!val || val <= 0) return;
+    onSetMaxBalance(val);
+    setEditingBalance(false);
+    setBalanceVal('');
+  };
+  const canConfirmBalance = balanceVal.length > 0 && parseInt(balanceVal) > 0;
+
+  return (
+    <div className="screen fade-in">
+      <div className="bg-gradient" />
+      <div className="status-bar">
+        <span>9:41</span>
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          <Icon name="Signal" size={16} stroke={2} />
+          <Icon name="Wifi" size={16} stroke={2} />
+          <span style={{ fontFamily:'Fredoka', fontSize:12 }}>78%</span>
+        </div>
+      </div>
+
+      <div className="scroll-area" style={{ position:'relative', zIndex:1 }}>
+        <div style={{ padding:'0 20px' }}>
+          <h1 style={{ fontSize:22, fontWeight:600, color:'var(--text)' }}>Planning Rutinitas</h1>
+          <p style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>Set pengeluaran rutin sekali, jalan otomatis tiap hari</p>
+        </div>
+
+        {/* Saldo Awal */}
+        <div style={{ margin:'16px 20px 0' }}>
+          <div className="card" style={{ padding:'18px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'1px' }}>SALDO AWAL BULAN INI</p>
+              <p style={{ fontFamily:'Fredoka', fontSize:26, fontWeight:600, color:'var(--text)', marginTop:4 }}>Rp {fmt(maxBalance)}</p>
+            </div>
+            <button onClick={() => { setBalanceVal(String(maxBalance)); setEditingBalance(true); }} style={{ padding:'8px 16px', borderRadius:10, background:'oklch(58% 0.10 245 / 0.1)', color:'var(--coral)', border:'1px solid oklch(58% 0.10 245 / 0.2)', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Nunito' }}>
+              Ubah
+            </button>
+          </div>
+        </div>
+
+        {/* Estimasi bulanan */}
+        <div style={{ margin:'12px 20px 0' }}>
+          <div className="card" style={{ padding:'18px 20px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
+              <div>
+                <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'1px' }}>ESTIMASI PENGELUARAN/BULAN</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:28, fontWeight:600, color: remaining < 0 ? 'oklch(60% 0.14 25)' : 'var(--text)', marginTop:4 }}>Rp {fmt(monthlyEstimate)}</p>
+              </div>
+              <div style={{ textAlign:'right' }}>
+                <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'1px' }}>ESTIMASI SISA</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:16, fontWeight:600, color: remaining >= 0 ? 'oklch(68% 0.09 200)' : 'oklch(60% 0.14 25)', marginTop:4 }}>
+                  {remaining >= 0 ? '+' : ''}Rp {fmt(remaining)}
+                </p>
+              </div>
+            </div>
+            <div className="health-bar-track">
+              <div className="health-bar-fill" style={{ width:`${pct}%`, background: remaining >= 0 ? 'oklch(68% 0.09 200)' : 'oklch(60% 0.14 25)' }} />
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+              <span style={{ fontFamily:'Fredoka', fontSize:11, color:'var(--muted)' }}>Rp 0</span>
+              <span style={{ fontFamily:'Fredoka', fontSize:11, color:'var(--muted)' }}>Rp {fmt(maxBalance)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Daftar rutinitas per tipe */}
+        {['daily','weekday','weekend'].map(type => {
+          const typeItems = items.filter(r => r.appliesTo === type);
+          if (typeItems.length === 0) return null;
+          const subtotal = typeItems.reduce((s, r) => s + r.amount * (r.daysPerMonth || 0), 0);
+          return (
+            <div key={type} style={{ margin:'20px 20px 0' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                <p className="sec-header" style={{ padding:0, margin:0 }}>{TYPE_EMOJI[type]} {TYPE_LABELS[type].toUpperCase()}</p>
+                <span style={{ fontFamily:'Fredoka', fontSize:12, color:'var(--muted)' }}>Rp {fmt(subtotal)}/bln</span>
+              </div>
+              <div className="card" style={{ padding:'4px 16px' }}>
+                {typeItems.map(item => {
+                  const cat = CATEGORIES.find(c => c.id === item.category) || CATEGORIES[5];
+                  return (
+                    <div key={item.id} className="tx-item">
+                      <div className="tx-icon" style={{ background: cat.color + '22' }}>
+                        <span style={{ fontSize:18 }}>{item.emoji}</span>
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>{item.name}</p>
+                        <p style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>
+                          Rp {fmt(item.amount)} × {item.daysPerMonth}x = <span style={{ fontFamily:'Fredoka', color:'var(--text)' }}>Rp {fmt(item.amount * item.daysPerMonth)}</span>/bln
+                        </p>
+                      </div>
+                      <button onClick={() => handleDeleteItem(item.id)} style={{ width:28, height:28, borderRadius:8, background:'rgba(27,40,56,0.05)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <Icon name="Trash2" size={13} stroke={2} color="var(--muted)" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {items.length === 0 && (
+          <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--muted)' }}>
+            <p style={{ fontSize:36, marginBottom:10 }}>📋</p>
+            <p style={{ fontSize:14, fontWeight:600 }}>Belum ada rutinitas</p>
+            <p style={{ fontSize:12, marginTop:4 }}>Tambah pengeluaran rutinmu di bawah</p>
+          </div>
+        )}
+
+        <div style={{ margin:'20px 20px 0' }}>
+          <button onClick={() => setShowAdd(true)} style={{ width:'100%', height:50, borderRadius:14, background:'rgba(27,40,56,0.04)', border:'1.5px dashed rgba(27,40,56,0.15)', color:'var(--muted)', cursor:'pointer', fontSize:14, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            <Icon name="Plus" size={18} stroke={2.5} />
+            Tambah Rutinitas
+          </button>
+        </div>
+
+        <div style={{ padding:'12px 20px 0' }}>
+          <button onClick={() => onSaveRoutines(items)} style={{ width:'100%', height:54, borderRadius:16, background:'var(--coral)', color:'white', border:'none', cursor:'pointer', fontSize:16, fontWeight:600, boxShadow:'0 8px 24px oklch(58% 0.10 245 / 0.2)', transition:'all 0.2s' }}>
+            Simpan Rutinitas 🎯
+          </button>
+        </div>
+        <div style={{ height:24 }} />
+      </div>
+
+      {showAdd && <AddRoutineSheet onClose={() => setShowAdd(false)} onAdd={handleAddItem} />}
+
+      {editingBalance && (
+        <div className="sheet-overlay" onClick={e => e.target === e.currentTarget && setEditingBalance(false)}>
+          <div className="sheet slide-up">
+            <div className="sheet-handle" />
+            <div style={{ padding:'16px 20px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Saldo Awal Bulan Ini 💰</p>
+              <button onClick={() => setEditingBalance(false)} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+            <div style={{ padding:'16px 20px 0' }}>
+              <div className="amount-display" style={{ background:'var(--card)', borderRadius:16, padding:'16px 20px' }}>
+                <span className="amount-prefix">Rp</span>
+                <span style={{ color: balanceVal ? 'var(--text)' : 'var(--muted)' }}>
+                  {balanceVal ? fmt(parseInt(balanceVal)) : '0'}
+                </span>
+              </div>
+            </div>
+            <div style={{ padding:'12px 20px 0', display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+              {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map(k => (
+                <button key={k} className={`numpad-btn ${k==='000'||k==='⌫' ? 'special' : ''}`} onClick={() => handleBalanceNum(k)}>
+                  {k === '⌫' ? <Icon name="Delete" size={22} stroke={2} /> : k}
+                </button>
+              ))}
+            </div>
+            <div style={{ padding:'14px 20px 0' }}>
+              <button
+                onClick={confirmBalance}
+                disabled={!canConfirmBalance}
+                style={{
+                  width:'100%', height:54, borderRadius:16,
+                  background: canConfirmBalance ? 'var(--coral)' : 'rgba(27,40,56,0.05)',
+                  color: canConfirmBalance ? 'white' : 'var(--muted)',
+                  border:'none', cursor: canConfirmBalance ? 'pointer' : 'default',
+                  fontSize:16, fontWeight:600,
+                  boxShadow: canConfirmBalance ? '0 8px 24px oklch(58% 0.10 245 / 0.2)' : 'none',
+                  transition:'all 0.2s'
+                }}
+              >
+                Simpan Saldo Awal ✓
+              </button>
+            </div>
+            <div style={{ height:20 }} />
+          </div>
+        </div>
+      )}
+
+      <BottomNav active="plan" onNav={onNav} onFab={onFab} />
+    </div>
+  );
+}
+
+// ─── AddRoutineSheet ──────────────────────────────────────────────────────────
+function AddRoutineSheet({ onClose, onAdd }) {
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [emoji, setEmoji] = useState('🍜');
+  const [category, setCategory] = useState('food');
+  const [appliesTo, setAppliesTo] = useState('weekday');
+  const [amount, setAmount] = useState('');
+  const [daysPerMonth, setDaysPerMonth] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const DEFAULT_DAYS = { daily:30, weekday:22, weekend:8 };
+  const canProceed = parseInt(amount) > 0;
+  const canAdd = canProceed && name.trim().length > 0;
+
+  const handleNum = (val) => {
+    setAmount(prev => {
+      if (val === '⌫') return prev.slice(0,-1);
+      if (val === '000') return prev + '000';
+      if (prev.length >= 9) return prev;
+      return prev + val;
+    });
+  };
+
+  const handleAdd = () => {
+    if (!canAdd) return;
+    onAdd({ id:'r_'+Date.now(), name:name.trim(), emoji, category, appliesTo, amount:parseInt(amount), daysPerMonth:parseInt(daysPerMonth)||DEFAULT_DAYS[appliesTo] });
+  };
+
+  return (
+    <div className="sheet-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="sheet slide-up">
+        <div className="sheet-handle" />
+        {step === 0 && (
+          <div className="fade-in">
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px 0' }}>
+              <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Tambah Rutinitas</p>
+              <button onClick={onClose} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+            <div style={{ padding:'20px 20px 0' }}>
+              <div className="amount-display" style={{ background:'var(--card)', borderRadius:16, padding:'16px 20px' }}>
+                <span className="amount-prefix">Rp</span>
+                <span style={{ color: amount ? 'var(--text)' : 'var(--muted)', minWidth:40 }}>{amount ? fmt(parseInt(amount)) : '0'}</span>
+              </div>
+            </div>
+            <div style={{ padding:'14px 20px 0' }}>
+              <p style={{ fontSize:11, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:8 }}>BERLAKU UNTUK</p>
+              <div style={{ display:'flex', gap:8 }}>
+                {[['daily','Setiap Hari','📅'],['weekday','Hari Kerja','💼'],['weekend','Hari Libur','🌴']].map(([val,label,em]) => (
+                  <button key={val} className={`chip ${appliesTo===val?'active':''}`} onClick={() => setAppliesTo(val)} style={{ flex:1, justifyContent:'center' }}>{em} {label}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding:'12px 20px 0', display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+              {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map(k => (
+                <button key={k} className={`numpad-btn ${k==='000'||k==='⌫'?'special':''}`} onClick={() => handleNum(k)}>
+                  {k==='⌫' ? <Icon name="Delete" size={22} stroke={2} /> : k}
+                </button>
+              ))}
+            </div>
+            <div style={{ padding:'14px 20px 0' }}>
+              <button onClick={() => canProceed && setStep(1)} style={{ width:'100%', height:54, borderRadius:16, background:canProceed?'var(--coral)':'rgba(27,40,56,0.05)', color:canProceed?'white':'var(--muted)', border:'none', cursor:canProceed?'pointer':'default', fontSize:16, fontWeight:600, transition:'all 0.25s', boxShadow:canProceed?'0 8px 24px oklch(58% 0.10 245 / 0.2)':'none' }}>
+                Lanjutkan →
+              </button>
+            </div>
+            <div style={{ height:16 }} />
+          </div>
+        )}
+        {step === 1 && (
+          <div className="fade-in">
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px 0' }}>
+              <button onClick={() => setStep(0)} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>←</button>
+              <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Detail Rutinitas</p>
+              <button onClick={onClose} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+            <div style={{ margin:'14px 20px 0', background:'var(--card)', borderRadius:16, padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div>
+                <p style={{ fontSize:11, color:'var(--muted)', fontWeight:600, letterSpacing:'0.5px' }}>PER KEJADIAN</p>
+                <p style={{ fontFamily:'Fredoka', fontSize:22, fontWeight:600, color:'var(--text)', marginTop:2 }}>Rp {fmt(parseInt(amount))}</p>
+              </div>
+              <span style={{ fontSize:28 }}>{emoji}</span>
+            </div>
+            <div style={{ padding:'0 20px', marginTop:14 }}>
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:8 }}>NAMA & IKON</p>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <button onClick={() => setShowEmojiPicker(p=>!p)} style={{ width:54, height:54, borderRadius:14, background:'var(--card2)', border:`2px solid ${showEmojiPicker?'var(--coral)':'var(--border)'}`, fontSize:26, cursor:'pointer', flexShrink:0, transition:'all 0.2s' }}>{emoji}</button>
+                <input className="text-input" placeholder="cth. Parkir, Makan Siang..." value={name} onChange={e=>setName(e.target.value)} maxLength={24} style={{ flex:1 }} autoFocus />
+              </div>
+              {showEmojiPicker && (
+                <div className="fade-in" style={{ marginTop:10, background:'var(--card)', borderRadius:14, padding:'12px', display:'flex', flexWrap:'wrap', gap:6 }}>
+                  {EMOJI_SUGGESTIONS.map(em => (
+                    <button key={em} onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} style={{ width:38, height:38, borderRadius:10, background:emoji===em?'oklch(60% 0.14 25 / 0.12)':'transparent', border:emoji===em?'1.5px solid var(--coral)':'1.5px solid transparent', fontSize:20, cursor:'pointer', transition:'all 0.15s' }}>{em}</button>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginTop:14, marginBottom:8 }}>KATEGORI</p>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                {CATEGORIES.map(cat => (
+                  <button key={cat.id} className={`chip ${category===cat.id?'active':''}`} onClick={() => setCategory(cat.id)}>{cat.emoji} {cat.label}</button>
+                ))}
+              </div>
+              <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginTop:14, marginBottom:8 }}>
+                BERAPA KALI SEBULAN?
+                <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, color:'var(--muted)' }}>(default: {DEFAULT_DAYS[appliesTo]}x)</span>
+              </p>
+              <input className="text-input" placeholder={`cth. ${DEFAULT_DAYS[appliesTo]}`} value={daysPerMonth} onChange={e=>setDaysPerMonth(e.target.value.replace(/\D/g,''))} inputMode="numeric" maxLength={2} />
+              {daysPerMonth && parseInt(amount) > 0 && (
+                <p style={{ fontSize:12, color:'var(--coral)', fontWeight:600, marginTop:6 }}>
+                  Estimasi: Rp {fmt(parseInt(amount) * (parseInt(daysPerMonth)||0))}/bulan
+                </p>
+              )}
+            </div>
+            <div style={{ padding:'16px 20px 0' }}>
+              <button onClick={handleAdd} disabled={!canAdd} style={{ width:'100%', height:54, borderRadius:16, background:canAdd?'var(--coral)':'rgba(27,40,56,0.05)', color:canAdd?'white':'var(--muted)', border:'none', cursor:canAdd?'pointer':'default', fontSize:16, fontWeight:600, transition:'all 0.25s', boxShadow:canAdd?'0 8px 24px oklch(58% 0.10 245 / 0.2)':'none' }}>
+                Simpan Rutinitas 💾
+              </button>
+            </div>
+            <div style={{ height:20 }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── AddQuickActionSheet ──────────────────────────────────────────────────────
+const EMOJI_SUGGESTIONS = ['🍜','🍱','🧋','🍕','🍔','☕','🥤','🛵','🚗','🏪','🛍️','💊','📚','🎮','🎬','💇','🏋️','✈️','🐾','🌸','🍎','🥦','🎁','💡','🔧','🏠'];
+
+function AddQuickActionSheet({ onClose, onAdd }) {
+  const [name, setName] = useState('');
+  const [emoji, setEmoji] = useState('🍜');
+  const [category, setCategory] = useState('food');
+  const [amount, setAmount] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const canAdd = name.trim().length > 0;
+
+  const handleAdd = () => {
+    if (!canAdd) return;
+    onAdd({ label: name.trim(), emoji, id: category, amount: amount ? parseInt(amount) : 0, key: Date.now(), custom: true });
+  };
+
+  return (
+    <div className="sheet-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="sheet slide-up">
+        <div className="sheet-handle" />
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 20px 0' }}>
+          <p style={{ fontSize:17, fontWeight:600, color:'var(--text)' }}>Aksi Cepat Baru</p>
+          <button onClick={onClose} style={{ width:30, height:30, borderRadius:99, background:'rgba(27,40,56,0.06)', border:'none', color:'var(--muted)', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        </div>
+
+        <div style={{ padding:'20px 20px 0' }}>
+          {/* Emoji + Name row */}
+          <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:8 }}>NAMA & IKON</p>
+          <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+            <button
+              onClick={() => setShowEmojiPicker(p => !p)}
+              style={{ width:54, height:54, borderRadius:14, background:'var(--card2)', border:`2px solid ${showEmojiPicker ? 'var(--coral)' : 'var(--border)'}`, fontSize:26, cursor:'pointer', flexShrink:0, transition:'all 0.2s' }}
+            >
+              {emoji}
+            </button>
+            <input
+              className="text-input"
+              placeholder="cth. Beli Buah, Laundry..."
+              value={name}
+              onChange={e => setName(e.target.value)}
+              maxLength={20}
+              style={{ flex:1 }}
+            />
+          </div>
+
+          {/* Emoji picker */}
+          {showEmojiPicker && (
+            <div className="fade-in" style={{ marginTop:10, background:'var(--card)', borderRadius:14, padding:'12px', display:'flex', flexWrap:'wrap', gap:6 }}>
+              {EMOJI_SUGGESTIONS.map(em => (
+                <button key={em} onClick={() => { setEmoji(em); setShowEmojiPicker(false); }}
+                  style={{ width:38, height:38, borderRadius:10, background: emoji===em ? 'oklch(60% 0.14 25 / 0.12)' : 'transparent', border: emoji===em ? '1.5px solid var(--coral)' : '1.5px solid transparent', fontSize:20, cursor:'pointer', transition:'all 0.15s' }}>
+                  {em}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Category */}
+          <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginTop:16, marginBottom:8 }}>KATEGORI</p>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {CATEGORIES.map(cat => (
+              <button key={cat.id} className={`chip ${category === cat.id ? 'active' : ''}`} onClick={() => setCategory(cat.id)}>
+                {cat.emoji} {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Preset amount */}
+          <p style={{ fontSize:12, fontWeight:600, color:'var(--muted)', letterSpacing:'0.5px', marginTop:16, marginBottom:8 }}>NOMINAL PRESET <span style={{ fontWeight:600, textTransform:'none', letterSpacing:0 }}>(opsional)</span></p>
+          <div style={{ position:'relative' }}>
+            <span style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', fontSize:13, color:'var(--muted)', fontFamily:'Fredoka', pointerEvents:'none' }}>Rp</span>
+            <input
+              className="text-input"
+              placeholder="0 = buka numpad"
+              value={amount}
+              onChange={e => setAmount(e.target.value.replace(/\D/g,''))}
+              style={{ paddingLeft:38, fontFamily:'Fredoka' }}
+              inputMode="numeric"
+            />
+          </div>
+        </div>
+
+        {/* Add button */}
+        <div style={{ padding:'20px 20px 0' }}>
+          <button
+            onClick={handleAdd}
+            disabled={!canAdd}
+            style={{
+              width:'100%', height:54, borderRadius:16,
+              background: canAdd ? 'var(--coral)' : 'rgba(27,40,56,0.05)',
+              color: canAdd ? 'white' : 'var(--muted)',
+              border:'none', cursor: canAdd ? 'pointer' : 'default',
+              fontSize:16, fontWeight:600,
+              transition:'all 0.25s',
+              boxShadow: canAdd ? '0 8px 24px oklch(58% 0.10 245 / 0.2)' : 'none'
+            }}
+          >
+            Simpan Aksi Cepat ✨
+          </button>
+        </div>
+        <div style={{ height:24 }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ msg, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="toast">
+      <span>✅</span>
+      <span>{msg}</span>
+    </div>
+  );
+}
+
+// ─── Confetti ──────────────────────────────────────────────────────────────────
+function Confetti() {
+  const pieces = Array.from({length:18}, (_,i) => ({
+    id: i,
+    x: 20 + Math.random()*70,
+    color: ['oklch(70% 0.08 60)','oklch(68% 0.09 200)','oklch(75% 0.12 75)','oklch(58% 0.10 245)','oklch(60% 0.05 250)'][i%5],
+    size: 6 + Math.random()*8,
+    dur: 0.8 + Math.random()*0.6,
+    delay: Math.random()*0.3,
+    rot: Math.random()*360
+  }));
+  return (
+    <>
+      {pieces.map(p => (
+        <div key={p.id} className="confetti" style={{
+          left:`${p.x}%`, top:'30%',
+          width:p.size, height:p.size,
+          background:p.color,
+          animationDuration:`${p.dur}s`,
+          animationDelay:`${p.delay}s`,
+          transform:`rotate(${p.rot}deg)`
+        }} />
+      ))}
+    </>
+  );
+}
+
+
+// ─── ConfirmModal ─────────────────────────────────────────────────────────────
+function ConfirmModal({ title, message, confirmLabel = 'Ya', onConfirm, onCancel }) {
+  return (
+    <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 28px' }}>
+      <div className="pop-in" style={{ background:'var(--navy)', borderRadius:24, padding:'28px 24px', width:'100%', boxShadow:'0 24px 60px rgba(0,0,0,0.25)', border:'1px solid var(--border)' }}>
+        <div style={{ textAlign:'center', marginBottom:22 }}>
+          <div style={{ width:54, height:54, borderRadius:16, background:'oklch(60% 0.14 25 / 0.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', fontSize:28 }}>
+            🚪
+          </div>
+          <p style={{ fontSize:18, fontWeight:700, color:'var(--text)', fontFamily:'Fredoka', letterSpacing:-0.3 }}>{title}</p>
+          {message && <p style={{ fontSize:13, color:'var(--muted)', marginTop:8, lineHeight:1.55 }}>{message}</p>}
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button
+            onClick={onCancel}
+            style={{ flex:1, height:50, borderRadius:14, background:'rgba(27,40,56,0.06)', color:'var(--text)', border:'none', cursor:'pointer', fontSize:15, fontWeight:600, fontFamily:'Nunito', transition:'all 0.2s' }}
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex:1, height:50, borderRadius:14, background:'oklch(60% 0.14 25)', color:'white', border:'none', cursor:'pointer', fontSize:15, fontWeight:600, fontFamily:'Nunito', boxShadow:'0 6px 20px oklch(60% 0.14 25 / 0.3)', transition:'all 0.2s' }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Login Screen ─────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const canSubmit = email.includes('@') && password.length >= 4 && (mode === 'login' || name.length >= 2);
+
+  const submit = () => {
+    if (!canSubmit) return;
+    setLoading(true);
+    setTimeout(() => {
+      onLogin({
+        email,
+        name: mode === 'register' ? name : email.split('@')[0].replace(/[^a-z]/gi,'') || 'User',
+        joinedAt: Date.now()
+      });
+    }, 700);
+  };
+
+  return (
+    <div className="screen" style={{ background:'linear-gradient(160deg, #EEF3F8 0%, #D9E4EE 100%)', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'80px 28px 40px' }}>
+      {/* Logo */}
+      <div>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+          <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg, var(--coral), var(--mint))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 8px 20px oklch(58% 0.10 245 / 0.3)' }}>
+            <span style={{ fontSize:26 }}>💰</span>
+          </div>
+          <p style={{ fontFamily:'Fredoka', fontSize:24, fontWeight:600, color:'var(--text)', letterSpacing:-0.5 }}>SakuBuddy</p>
+        </div>
+        <h1 style={{ fontFamily:'Fredoka', fontSize:32, fontWeight:600, color:'var(--text)', lineHeight:1.1, letterSpacing:-0.5, marginBottom:8 }}>{mode === 'login' ? 'Selamat datang kembali!' : 'Halo, kenalan dulu yuk!'}</h1>
+        <p style={{ fontSize:14, color:'var(--muted)', lineHeight:1.5 }}>{mode === 'login' ? 'Masuk untuk lanjut catat keuanganmu.' : 'Buat akun gratis biar kamu bisa simpan progress.'}</p>
+      </div>
+
+      {/* Form */}
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {mode === 'register' && (
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:6, textTransform:'uppercase' }}>Nama Panggilan</p>
+            <input
+              type="text"
+              placeholder="cth. Alya"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="text-input"
+              style={{ background:'var(--card)', border:'1.5px solid var(--border)' }}
+            />
+          </div>
+        )}
+        <div>
+          <p style={{ fontSize:11, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:6, textTransform:'uppercase' }}>Email</p>
+          <input
+            type="email"
+            placeholder="kamu@email.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="text-input"
+            style={{ background:'var(--card)', border:'1.5px solid var(--border)' }}
+          />
+        </div>
+        <div>
+          <p style={{ fontSize:11, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', marginBottom:6, textTransform:'uppercase' }}>Password</p>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="text-input"
+            style={{ background:'var(--card)', border:'1.5px solid var(--border)' }}
+          />
+        </div>
+
+      </div>
+
+      {/* Actions */}
+      <div>
+        <button
+          onClick={submit}
+          disabled={!canSubmit || loading}
+          style={{
+            width:'100%', height:54, borderRadius:16,
+            background: canSubmit ? 'var(--coral)' : 'rgba(27,40,56,0.06)',
+            color: canSubmit ? 'white' : 'var(--muted)',
+            border:'none', cursor: canSubmit && !loading ? 'pointer' : 'default',
+            fontSize:16, fontWeight:600, fontFamily:'Fredoka',
+            transition:'all 0.25s',
+            boxShadow: canSubmit ? '0 8px 20px oklch(58% 0.10 245 / 0.25)' : 'none'
+          }}
+        >
+          {loading ? 'Sebentar...' : (mode === 'login' ? 'Masuk' : 'Daftar Sekarang')}
+        </button>
+
+        <div style={{ display:'flex', alignItems:'center', gap:10, margin:'18px 0' }}>
+          <div style={{ flex:1, height:1, background:'var(--border)' }} />
+          <p style={{ fontSize:11, color:'var(--muted)', fontWeight:600 }}>atau</p>
+          <div style={{ flex:1, height:1, background:'var(--border)' }} />
+        </div>
+
+        <button
+          onClick={() => onLogin({ email:'guest@sakubuddy', name:'Tamu', joinedAt: Date.now() })}
+          style={{
+            width:'100%', height:50, borderRadius:14,
+            background:'var(--card)', color:'var(--text)',
+            border:'1.5px solid var(--border)', cursor:'pointer',
+            fontSize:14, fontWeight:600, fontFamily:'Fredoka',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:8
+          }}
+        >
+          <Icon name="UserCircle" size={18} stroke={2} />
+          Lanjut sebagai Tamu
+        </button>
+
+        <p style={{ textAlign:'center', fontSize:13, color:'var(--muted)', marginTop:18 }}>
+          {mode === 'login' ? 'Belum punya akun? ' : 'Sudah punya akun? '}
+          <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ background:'none', border:'none', color:'var(--coral)', fontWeight:700, cursor:'pointer', fontSize:13, fontFamily:'Nunito' }}>
+            {mode === 'login' ? 'Daftar gratis' : 'Masuk'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Profile Screen ─────────────────────────────────────────────────────────
+function ProfileScreen({ user, transactions, balance, maxBalance, onLogout, onNav, onUpdateUser, onFab }) {
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(user.name);
+  const totalSpent = maxBalance - balance;
+  const memberDays = Math.max(1, Math.floor((Date.now() - user.joinedAt) / 86400000));
+  const memberSince = new Date(user.joinedAt).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+
+  const saveName = () => {
+    if (draftName.trim().length >= 2) {
+      onUpdateUser({ ...user, name: draftName.trim() });
+      setEditing(false);
+    }
+  };
+
+  return (
+    <div className="screen">
+      {/* Status bar */}
+      <div className="status-bar">
+        <span style={{ fontFamily:'Fredoka', fontSize:14, fontWeight:600 }}>9:41</span>
+        <div style={{ display:'flex', gap:5, alignItems:'center' }}>
+          <Icon name="Signal" size={16} stroke={2} />
+          <Icon name="Wifi" size={16} stroke={2} />
+          <span style={{ fontFamily:'Fredoka', fontSize:12 }}>78%</span>
+        </div>
+      </div>
+
+      <div className="scroll-area">
+      {/* Header with gradient */}
+      <div style={{ background:'linear-gradient(160deg, oklch(58% 0.10 245 / 0.18), oklch(68% 0.09 200 / 0.1) 60%, transparent)', padding:'8px 20px 24px' }}>
+        <h1 style={{ fontFamily:'Fredoka', fontSize:26, fontWeight:600, color:'var(--text)', letterSpacing:-0.5 }}>Profil</h1>
+
+        {/* Avatar card */}
+        <div className="card" style={{ marginTop:16, padding:'24px 20px', textAlign:'center', position:'relative' }}>
+          <div style={{ width:84, height:84, margin:'0 auto 12px', borderRadius:'50%', background:'linear-gradient(135deg, var(--coral), var(--mint))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:38, fontFamily:'Fredoka', fontWeight:600, color:'white', boxShadow:'0 6px 20px oklch(58% 0.10 245 / 0.3)' }}>
+            {user.name[0]?.toUpperCase() || '?'}
+          </div>
+          {editing ? (
+            <div style={{ display:'flex', gap:8, justifyContent:'center', alignItems:'center' }}>
+              <input value={draftName} onChange={e => setDraftName(e.target.value)} className="text-input" style={{ width:160, textAlign:'center', height:40, padding:'8px 12px' }} autoFocus />
+              <button onClick={saveName} style={{ width:40, height:40, borderRadius:10, background:'var(--coral)', color:'white', border:'none', cursor:'pointer', fontSize:14 }}>✓</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+                <p style={{ fontFamily:'Fredoka', fontSize:22, fontWeight:600, color:'var(--text)' }}>{user.name}</p>
+                <button onClick={() => { setDraftName(user.name); setEditing(true); }} style={{ background:'none', border:'none', cursor:'pointer', padding:4, color:'var(--muted)', display:'flex' }}>
+                  <Icon name="Pencil" size={14} stroke={2.2} />
+                </button>
+              </div>
+              <p style={{ fontSize:13, color:'var(--muted)', marginTop:2 }}>{user.email}</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ padding:'4px 20px 0' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10 }}>
+          <div className="card" style={{ padding:'14px 10px', textAlign:'center' }}>
+            <p style={{ fontFamily:'Fredoka', fontSize:22, fontWeight:600, color:'var(--coral)' }}>{transactions.length}</p>
+            <p style={{ fontSize:10, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', textTransform:'uppercase', marginTop:2 }}>Transaksi</p>
+          </div>
+          <div className="card" style={{ padding:'14px 10px', textAlign:'center' }}>
+            <p style={{ fontFamily:'Fredoka', fontSize:22, fontWeight:600, color:'var(--coral)' }}>{memberDays}</p>
+            <p style={{ fontSize:10, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', textTransform:'uppercase', marginTop:2 }}>Hari Aktif</p>
+          </div>
+          <div className="card" style={{ padding:'14px 10px', textAlign:'center' }}>
+            <p style={{ fontFamily:'Fredoka', fontSize:18, fontWeight:600, color:'var(--coral)' }}>Rp {fmt(Math.round(totalSpent/1000))}k</p>
+            <p style={{ fontSize:10, fontWeight:700, color:'var(--muted)', letterSpacing:'0.5px', textTransform:'uppercase', marginTop:2 }}>Tercatat</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Functional actions */}
+      <div style={{ padding:'24px 20px 0' }}>
+        <p className="sec-header" style={{ padding:0 }}>AKSI CEPAT</p>
+        <div className="card" style={{ padding:0, overflow:'hidden', marginTop:8 }}>
+          <SettingRow icon="Target" label="Atur Budget Bulanan" sub="Pergi ke Planning" onClick={() => onNav('plan')} />
+          <SettingRow icon="BarChart3" label="Lihat Laporan Lengkap" sub="Pengeluaran & insight AI" onClick={() => onNav('report')} last />
+        </div>
+
+        {/* Logout */}
+        <button
+          onClick={onLogout}
+          style={{
+            width:'100%', height:50, borderRadius:14, marginTop:20,
+            background:'oklch(60% 0.14 25 / 0.1)', color:'oklch(60% 0.14 25)',
+            border:'1.5px solid oklch(60% 0.14 25 / 0.2)', cursor:'pointer',
+            fontSize:14, fontWeight:600, fontFamily:'Fredoka',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:8
+          }}
+        >
+          <Icon name="LogOut" size={16} stroke={2.2} />
+          Keluar
+        </button>
+        <p style={{ textAlign:'center', fontSize:11, color:'var(--muted)', marginTop:14 }}>Anggota sejak {memberSince}</p>
+      </div>
+      <div style={{ height:24 }} />
+      </div>
+
+      <BottomNav active="profile" onNav={onNav} onFab={onFab} />
+    </div>
+  );
+}
+
+function SettingRow({ icon, label, sub, onClick, last }) {
+  return (
+    <div onClick={onClick} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderBottom: last ? 'none' : '1px solid var(--border)', cursor:'pointer' }}>
+      <div style={{ width:36, height:36, borderRadius:10, background:'oklch(58% 0.10 245 / 0.1)', color:'var(--coral)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <Icon name={icon} size={18} stroke={2} />
+      </div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <p style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>{label}</p>
+        {sub && <p style={{ fontSize:12, color:'var(--muted)', marginTop:1 }}>{sub}</p>}
+      </div>
+      <Icon name="ChevronRight" size={16} stroke={2.2} color="var(--muted)" />
+    </div>
+  );
+}
+
+// ─── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "startBalance": 1500000,
+    "userName": "Alya",
+    "theme": "dark",
+    "showConfetti": true
+  }/*EDITMODE-END*/;
+
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  const [user, setUser] = useState(() => {
+    try { const s = localStorage.getItem('sakubuddy_user'); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  useEffect(() => {
+    if (user) localStorage.setItem('sakubuddy_user', JSON.stringify(user));
+    else localStorage.removeItem('sakubuddy_user');
+  }, [user]);
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const handleLogin = (u) => { setUser(u); setScreen('home'); };
+  const handleLogout = () => setShowLogoutModal(true);
+  const confirmLogout = () => { setShowLogoutModal(false); setUser(null); setScreen('home'); };
+
+  const [maxBalance, setMaxBalance] = useState(() => {
+    const saved = localStorage.getItem('sakubuddy_maxbalance');
+    return saved ? parseInt(saved) : 1500000;
+  });
+  const [balance, setBalance] = useState(() => {
+    const saved = localStorage.getItem('sakubuddy_balance');
+    const savedMax = parseInt(localStorage.getItem('sakubuddy_maxbalance') || '1500000');
+    return saved ? parseInt(saved) : savedMax;
+  });
+  const [transactions, setTransactions] = useState(() => {
+    try { const s = localStorage.getItem('sakubuddy_txs'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
+  const [screen, setScreen] = useState('home');
+  const [showInput, setShowInput] = useState(false);
+  const [presetCat, setPresetCat] = useState(null);
+  const [presetAmount, setPresetAmount] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showAddQuick, setShowAddQuick] = useState(false);
+  const [routines, setRoutines] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('sakubuddy_routines') || '[]'); } catch { return []; }
+  });
+  const [dailyChecks, setDailyChecks] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('sakubuddy_daily') || '{}'); } catch { return {}; }
+  });
+  const [planToast, setPlanToast] = useState(false);
+
+  useEffect(() => { localStorage.setItem('sakubuddy_routines', JSON.stringify(routines)); }, [routines]);
+  useEffect(() => { localStorage.setItem('sakubuddy_daily', JSON.stringify(dailyChecks)); }, [dailyChecks]);
+
+  const handleSaveRoutines = (r) => { setRoutines(r); setPlanToast(true); setTimeout(() => setPlanToast(false), 2000); };
+
+  const DEFAULT_QUICK_ACTIONS = [
+    { key:'qa-food', label:'Makan Siang', emoji:'🍜', id:'food', amount:20000 },
+    { key:'qa-transport', label:'Parkir', emoji:'🛵', id:'transport', amount:2000 },
+    { key:'qa-coffee', label:'Kopi', emoji:'☕', id:'coffee', amount:0 },
+    { key:'qa-other', label:'Lainnya', emoji:'📦', id:'other', amount:0 },
+  ];
+  const [quickActions, setQuickActions] = useState(() => {
+    try { const s = localStorage.getItem('sakubuddy_quick'); return s ? JSON.parse(s) : DEFAULT_QUICK_ACTIONS; } catch { return DEFAULT_QUICK_ACTIONS; }
+  });
+
+  useEffect(() => { localStorage.setItem('sakubuddy_quick', JSON.stringify(quickActions)); }, [quickActions]);
+
+  const handleAddQuickAction = (action) => {
+    setQuickActions(prev => [...prev, action]);
+    setShowAddQuick(false);
+    setToast(`"${action.label}" ditambahkan! 🎉`);
+  };
+  const handleDeleteQuickAction = (key) => {
+    setQuickActions(prev => prev.filter(a => a.key !== key));
+  };
+
+  // Persist
+  useEffect(() => { localStorage.setItem('sakubuddy_balance', balance); }, [balance]);
+  useEffect(() => { localStorage.setItem('sakubuddy_txs', JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem('sakubuddy_maxbalance', maxBalance); }, [maxBalance]);
+
+  const openInput = () => { setPresetCat(null); setPresetAmount(null); setShowInput(true); };
+  const openCat = (cat) => { setPresetCat(cat); setPresetAmount(cat.amount || null); setShowInput(true); };
+
+  const handleSubmit = (tx) => {
+    const newTx = { ...tx, id: Date.now() };
+    setTransactions(prev => [...prev, newTx]);
+    setBalance(prev => Math.max(0, prev - tx.amount));
+    setShowInput(false);
+    setToast(`Rp ${fmt(tx.amount)} dicatat! ${tx.unplanned ? '🎲' : '✅'}`);
+    if (tweaks.showConfetti && tx.mood === 'happy') { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 1200); }
+  };
+
+  const nav = (s) => setScreen(s);
+
+  const handleDeleteTx = (id) => {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    setBalance(prev => Math.min(maxBalance, prev + tx.amount));
+  };
+
+  const handleSetMaxBalance = (newMax) => {
+    setMaxBalance(newMax);
+    const spent = transactions.reduce((s, t) => s + t.amount, 0);
+    setBalance(Math.max(0, newMax - spent));
+  };
+
+  const getTodayKey = () => new Date().toISOString().split('T')[0];
+
+  const handleCheckRoutine = (routineId, currentStatus) => {
+    const todayKey = getTodayKey();
+    const routine = routines.find(r => r.id === routineId);
+    if (!routine) return;
+    let newStatus;
+    if (!currentStatus) {
+      newStatus = 'done';
+      const newTx = { id: Date.now(), name: routine.name, category: routine.category, amount: routine.amount, mood: 'happy', unplanned: false, routineId, date: todayKey };
+      setTransactions(prev => [...prev, newTx]);
+      setBalance(prev => Math.max(0, prev - routine.amount));
+      setToast(`${routine.emoji} ${routine.name} dicatat! ✅`);
+      if (tweaks.showConfetti) { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 1200); }
+    } else if (currentStatus === 'done') {
+      newStatus = 'skipped';
+      const txToRemove = [...transactions].reverse().find(t => t.routineId === routineId && t.date === todayKey);
+      if (txToRemove) {
+        setTransactions(prev => prev.filter(t => t.id !== txToRemove.id));
+        setBalance(prev => Math.min(maxBalance, prev + txToRemove.amount));
+      }
+    } else {
+      newStatus = undefined;
+    }
+    setDailyChecks(prev => {
+      const todayData = { ...(prev[todayKey] || {}) };
+      if (newStatus === undefined) delete todayData[routineId];
+      else todayData[routineId] = newStatus;
+      return { ...prev, [todayKey]: todayData };
+    });
+  };
+
+  if (!user) {
+    return (
+      <div style={{ position:'relative' }}>
+        <div className="phone-shell">
+          <div className="island" />
+          <LoginScreen onLogin={handleLogin} />
+        </div>
+        <TweaksPanel>
+          <TweakSection label="Login" />
+          <TweakButton label="Skip Login (Demo)" onClick={() => handleLogin({ email:'demo@sakubuddy', name: tweaks.userName || 'Alya', joinedAt: Date.now() - 86400000*7 })} />
+        </TweaksPanel>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position:'relative' }}>
+      <div className="phone-shell">
+        <div className="island" />
+
+        {screen === 'home' && (
+          <Dashboard
+            balance={balance}
+            maxBalance={maxBalance}
+            userName={user.name}
+            transactions={transactions}
+            onOpenInput={openInput}
+            onOpenCat={openCat}
+            onNav={nav}
+            quickActions={quickActions}
+            onAddQuickAction={() => setShowAddQuick(true)}
+            onDeleteQuickAction={handleDeleteQuickAction}
+            onDeleteTx={handleDeleteTx}
+            routines={routines}
+            dailyChecks={dailyChecks}
+            onCheckRoutine={handleCheckRoutine}
+          />
+        )}
+        {screen === 'report' && (
+          <ReportScreen
+            transactions={transactions}
+            balance={balance}
+            maxBalance={maxBalance}
+            onNav={nav}
+            onDeleteTx={handleDeleteTx}
+          />
+        )}
+        {screen === 'plan' && (
+          <PlanningScreen
+            routines={routines}
+            onSaveRoutines={handleSaveRoutines}
+            maxBalance={maxBalance}
+            onSetMaxBalance={handleSetMaxBalance}
+            transactions={transactions}
+            onNav={nav}
+            onFab={openInput}
+          />
+        )}
+        {screen === 'profile' && (
+          <ProfileScreen
+            user={user}
+            transactions={transactions}
+            balance={balance}
+            maxBalance={maxBalance}
+            onLogout={handleLogout}
+            onUpdateUser={setUser}
+            onNav={nav}
+            onFab={openInput}
+          />
+        )}
+
+        {showInput && (
+          <InputSheet
+            onClose={() => setShowInput(false)}
+            onSubmit={handleSubmit}
+            presetCat={presetCat}
+            presetAmount={presetAmount}
+          />
+        )}
+
+        {showAddQuick && (
+          <AddQuickActionSheet
+            onClose={() => setShowAddQuick(false)}
+            onAdd={handleAddQuickAction}
+          />
+        )}
+
+        {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
+        {planToast && <Toast msg="Rutinitas tersimpan! 🎯" onDone={() => setPlanToast(false)} />}
+        {showConfetti && <Confetti />}
+        {showLogoutModal && (
+          <ConfirmModal
+            title="Keluar dari SakuBuddy?"
+            message="Semua data tersimpan dan bisa diakses lagi setelah masuk."
+            confirmLabel="Keluar"
+            onConfirm={confirmLogout}
+            onCancel={() => setShowLogoutModal(false)}
+          />
+        )}
+      </div>
+
+      <TweaksPanel>
+        <TweakSection label="Profil" />
+        <TweakText label="Nama Pengguna" value={tweaks.userName} onChange={v => setTweak('userName', v)} />
+        <TweakSection label="Tampilan" />
+        <TweakToggle label="Konfeti saat Happy 🎉" value={tweaks.showConfetti} onChange={v => setTweak('showConfetti', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
